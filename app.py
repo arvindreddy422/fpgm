@@ -18,7 +18,7 @@ from auth import (
 )
 from config import BASE_DIR
 from database import get_db
-from indexes import ensure_indexes
+
 
 logger = logging.getLogger(__name__)
 
@@ -27,24 +27,7 @@ app = Flask(__name__, template_folder=str(BASE_DIR / "templates"), static_folder
 app.config['SECRET_KEY'] = 'your-secret-key-here'  # For session management
 
 
-# Initialize database indexes at startup (using lazy initialization pattern)
-_indexes_initialized = False
 
-def init_indexes():
-    """Run ensure_indexes once at startup."""
-    global _indexes_initialized
-    if not _indexes_initialized:
-        try:
-            ensure_indexes(get_db())
-            _indexes_initialized = True
-        except Exception as e:
-            logger.warning("ensure_indexes at startup failed (indexes may exist already): %s", e)
-
-
-@app.before_request
-def ensure_indexes_once():
-    """Initialize indexes on first request."""
-    init_indexes()
 
 
 def floor_label(floor_num: int) -> str:
