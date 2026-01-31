@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}History – PG Management{% endblock %}
+{% block content %}
+<div class="container">
+  <header class="page-header">
+    <h1 class="page-title">History</h1>
+    <p class="page-subtitle">Records and logs: person added/removed, advance booking, rent paid/unpaid, config.</p>
+  </header>
+  <div class="history-filters card">
+    <h2 class="section-title">Filters</h2>
+    <form method="get" action="/history" class="history-filters-grid">
+      <div class="form-group">
+        <label for="from_date">From date</label>
+        <input id="from_date" name="from" type="date" value="{{ from_date }}" class="input">
+      </div>
+      <div class="form-group">
+        <label for="to_date">To date</label>
+        <input id="to_date" name="to" type="date" value="{{ to_date }}" class="input">
+      </div>
+      <div class="form-group">
+        <label for="name_filter">Name</label>
+        <input id="name_filter" name="name" type="text" placeholder="Search by name" value="{{ name_filter }}" class="input">
+      </div>
+      <div class="form-group">
+        <label for="type_filter">Activity type</label>
+        <select id="type_filter" name="type" class="input">
+          <option value="">All</option>
+          {% for value, label in type_labels.items() %}
+          <option value="{{ value }}" {% if type_filter == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group" style="display:flex;align-items:flex-end;">
+        <button type="submit" class="btn btn--primary" data-loading-text="Loading...">Apply filters</button>
+      </div>
+    </form>
+  </div>
+  {% if not logs %}
+  <p class="page-loading">No records found.</p>
+  {% else %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Date & time</th>
+          <th>Type</th>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td>{{ log.createdAt }}</td>
+          <td>{{ type_labels.get(log.type, log.type) }}</td>
+          <td>{{ log.name }}</td>
+          <td>{{ log.description }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

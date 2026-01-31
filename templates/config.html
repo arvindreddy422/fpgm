@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block title %}Building Configuration – PG Management{% endblock %}
+{% block content %}
+<div class="container">
+  <header class="page-header">
+    <h1 class="page-title">Building Configuration</h1>
+    <p class="page-subtitle">Add or remove floors and rooms. Set max people per room.</p>
+  </header>
+  <form method="post" action="/config/save" class="config-form" id="configForm">
+    <div class="config-form__options">
+      <label class="config-checkbox-label">
+        <input type="checkbox" name="has_ground_floor" id="has_ground_floor" class="config-checkbox" {% if has_ground_floor %}checked{% endif %}>
+        <span>Include ground floor (first floor labeled "Ground Floor")</span>
+      </label>
+    </div>
+    <div class="config-form__actions">
+      <button type="button" class="btn btn--outline" id="addFloor">+ Add floor</button>
+    </div>
+    <div id="floorsContainer">
+      {% for floor in floor_configs %}
+      {% set floor_index = loop.index0 %}
+      <section class="config-floor-section" data-floor-index="{{ floor_index }}">
+        <div class="config-floor-section__head">
+          <h2 class="section-title config-floor-title">{% if has_ground_floor and floor_index == 0 %}Ground Floor{% else %}Floor {{ floor_index if has_ground_floor else loop.index }}{% endif %}</h2>
+          <button type="button" class="btn btn--secondary btn--small btn-remove-floor" {% if floor_configs | length <= 1 %}disabled{% endif %}>Remove floor</button>
+        </div>
+        <div class="config-rooms-list">
+          {% for room in floor.rooms %}
+          <div class="config-room-row">
+            <label class="config-room-label">Room {{ loop.index }} — Max people</label>
+            <input type="number" min="1" max="20" value="{{ room.maxPeople }}" class="input input--small config-room-max" data-floor="{{ floor_index }}" data-room="{{ loop.index0 }}">
+            <button type="button" class="btn btn--secondary btn--small btn-remove-room" {% if floor.rooms | length <= 1 %}disabled{% endif %}>Remove room</button>
+          </div>
+          {% endfor %}
+          <button type="button" class="btn btn--outline config-add-room">+ Add room to this floor</button>
+        </div>
+      </section>
+      {% endfor %}
+    </div>
+    <input type="hidden" name="config_json" id="config_json" value="">
+    {% if error %}
+    <p class="form-error">{{ error }}</p>
+    {% endif %}
+    <button type="submit" class="btn btn--primary" data-loading-text="Saving...">Save Configuration</button>
+  </form>
+</div>
+<script>
+(function() {
+  const container = document.getElementById('floorsContainer');
+  const hasGround = document.getElementById('has_ground_floor');
+  const configJson = document.getElementById('config_json');
+  const form = document.getElementById('configForm');
+
+  function getFloorLabel(idx) {
+    if (hasGround.checked && idx === 0) return 'Ground Floor';
+    return hasGround.checked ? 'Floor ' + idx : 'Floor ' + (idx + 1);
+  }
+
+  function renumberRoomLabels(section) {
+    const rows = section.querySelectorAll('.config-room-row');
+    rows.forEach(function(row, i) {
+      const label = row.querySelector('.config-room-label');
+      if (label) label.textContent = 'Room ' + (i + 1) + ' — Max people';
+      const inp = row.querySelector('.config-room-max');
+      if (inp) inp.dataset.room = String(i);
+    });
+  }
+
+  function buildConfig() {
+    const sections = container.querySelectorAll('.config-floor-section');
+    const floorConfigs = [];
+    sections.forEach((sec, fi) => {
+      const rows = sec.querySelectorAll('.config-room-row');
+      const rooms = [];
+      rows.forEach(row => {
+        const inp = row.querySelector('.config-room-max');
+        if (inp) rooms.push({ maxPeople: Math.max(1, Math.min(20, parseInt(inp.value, 10) || 2)) });
+      });
+      floorConfigs.push({ rooms });
+    });
+    configJson.value = JSON.stringify({
+      has_ground_floor: hasGround.checked,
+      floor_configs: floorConfigs
+    });
+  }
+
+  form.addEventListener('submit', function() { buildConfig(); });
+
+  document.getElementById('addFloor').addEventListener('click', function() {
+    const idx = container.querySelectorAll('.config-floor-section').length;
+    const section = document.createElement('section');
+    section.className = 'config-floor-section';
+    section.dataset.floorIndex = idx;
+    section.innerHTML = '<div class="config-floor-section__head">' +
+      '<h2 class="section-title config-floor-title">' + getFloorLabel(idx) + '</h2>' +
+      '<button type="button" class="btn btn--secondary btn--small btn-remove-floor">Remove floor</button>' +
+      '</div>' +
+      '<div class="config-rooms-list">' +
+      '<div class="config-room-row"><label class="config-room-label">Room 1 — Max people</label><input type="number" min="1" max="20" value="2" class="input input--small config-room-max" data-floor="' + idx + '" data-room="0"><button type="button" class="btn btn--secondary btn--small btn-remove-room" disabled>Remove room</button></div>' +
+      '<button type="button" class="btn btn--outline config-add-room">+ Add room to this floor</button>' +
+      '</div>';
+    container.appendChild(section);
+    bindFloor(section);
+  });
+
+  function bindFloor(section) {
+    const title = section.querySelector('.config-floor-title');
+    const idx = parseInt(section.dataset.floorIndex, 10);
+    const addRoom = section.querySelector('.config-add-room');
+    const list = section.querySelector('.config-rooms-list');
+    addRoom.addEventListener('click', function() {
+      const rowCount = section.querySelectorAll('.config-room-row').length;
+      const row = document.createElement('div');
+      row.className = 'config-room-row';
+      row.innerHTML = '<label class="config-room-label">Room ' + (rowCount + 1) + ' — Max people</label><input type="number" min="1" max="20" value="2" class="input input--small config-room-max" data-floor="' + idx + '" data-room="' + rowCount + '"><button type="button" class="btn btn--secondary btn--small btn-remove-room">Remove room</button>';
+      list.insertBefore(row, addRoom);
+      renumberRoomLabels(section);
+      row.querySelector('.btn-remove-room').addEventListener('click', function() {
+        if (section.querySelectorAll('.config-room-row').length > 1) {
+          row.remove();
+          renumberRoomLabels(section);
+          section.querySelectorAll('.btn-remove-room').forEach(function(btn) {
+            btn.disabled = section.querySelectorAll('.config-room-row').length <= 1;
+          });
+        }
+      });
+    });
+    section.querySelector('.btn-remove-floor').addEventListener('click', function() {
+      if (container.querySelectorAll('.config-floor-section').length > 1) section.remove();
+    });
+  }
+
+  hasGround.addEventListener('change', function() {
+    container.querySelectorAll('.config-floor-section').forEach((sec, i) => {
+      sec.querySelector('.config-floor-title').textContent = getFloorLabel(i);
+    });
+  });
+
+  container.querySelectorAll('.config-floor-section').forEach(bindFloor);
+  container.querySelectorAll('.btn-remove-room').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const row = btn.closest('.config-room-row');
+      const section = row && row.closest('.config-floor-section');
+      if (!row || !section) return;
+      if (section.querySelectorAll('.config-room-row').length <= 1) return;
+      row.remove();
+      renumberRoomLabels(section);
+      section.querySelectorAll('.btn-remove-room').forEach(function(b) {
+        b.disabled = section.querySelectorAll('.config-room-row').length <= 1;
+      });
+    });
+  });
+  container.querySelectorAll('.btn-remove-floor').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const sec = btn.closest('.config-floor-section');
+      if (sec && container.querySelectorAll('.config-floor-section').length > 1) sec.remove();
+    });
+  });
+})();
+</script>
+{% endblock %}

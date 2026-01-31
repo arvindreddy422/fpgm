@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login – PG Management</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="container container--auth">
+    <h1 class="page-title">Login</h1>
+    <form method="post" action="/login" class="form">
+      <input type="hidden" name="from" value="{{ request.args.get('from', '/main') }}">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" required autocomplete="email" class="input">
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" required autocomplete="current-password" class="input">
+      </div>
+      {% if error %}
+      <p class="form-error">{{ error }}</p>
+      {% endif %}
+      <button type="submit" class="btn btn--primary" id="loginBtn">Login</button>
+    </form>
+    <p class="auth-footer">New user? <a href="/register">Register</a></p>
+  </div>
+  <script>
+  document.querySelector('form').addEventListener('submit', function() {
+    var btn = document.getElementById('loginBtn');
+    if (btn && !btn.disabled) { btn.disabled = true; btn.textContent = 'Please wait...'; }
+  });
+  </script>
+</body>
+</html>

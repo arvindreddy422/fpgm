@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}PG Management{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  {% block body %}
+  {% if toast %}
+  <div class="toast toast--success" id="toastMessage" role="status">{{ toast | replace('+', ' ') }}</div>
+  {% endif %}
+  <nav class="nav" role="navigation">
+    <div class="nav__inner">
+      <button type="button" class="nav__toggle" id="navToggle" aria-expanded="false" aria-label="Toggle menu">
+        <span class="nav__toggle-bar"></span>
+        <span class="nav__toggle-bar"></span>
+        <span class="nav__toggle-bar"></span>
+      </button>
+      <div class="nav__menu" id="navMenu">
+        <a href="/main" class="nav__link nav__brand">PG</a>
+        <a href="/main" class="nav__link {% if request.url.path == '/main' or request.url.path == '/' %}nav__link--active{% endif %}">Main</a>
+        <a href="/rooms" class="nav__link {% if request.url.path == '/rooms' %}nav__link--active{% endif %}">Rooms</a>
+        <a href="/rent" class="nav__link {% if request.url.path == '/rent' %}nav__link--active{% endif %}">Rent</a>
+        <a href="/advance-booking" class="nav__link {% if request.url.path == '/advance-booking' %}nav__link--active{% endif %}">Advance Booking</a>
+        <a href="/history" class="nav__link {% if request.url.path == '/history' %}nav__link--active{% endif %}">History</a>
+        <a href="/config" class="nav__link {% if request.url.path == '/config' %}nav__link--active{% endif %}">Config</a>
+        <span class="nav__spacer"></span>
+        <form action="/logout" method="post" style="display:inline;">
+          <button type="submit" class="btn btn--secondary nav__logout" data-loading-text="Logging out...">Logout</button>
+        </form>
+      </div>
+    </div>
+    <div class="nav__backdrop" id="navBackdrop" aria-hidden="true"></div>
+  </nav>
+  <main class="main">
+    {% block content %}{% endblock %}
+  </main>
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var toastEl = document.getElementById('toastMessage');
+    if (toastEl) setTimeout(function() { toastEl.style.display = 'none'; }, 3000);
+    var navToggle = document.getElementById('navToggle');
+    var navMenu = document.getElementById('navMenu');
+    var navBackdrop = document.getElementById('navBackdrop');
+    function closeNav() {
+      if (navMenu) navMenu.classList.remove('nav__menu--open');
+      if (navToggle) navToggle.setAttribute('aria-expanded', 'false');
+    }
+    if (navToggle && navMenu) {
+      navToggle.addEventListener('click', function() {
+        var open = navMenu.classList.toggle('nav__menu--open');
+        navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+    }
+    if (navBackdrop) navBackdrop.addEventListener('click', closeNav);
+    document.querySelectorAll('.nav__link').forEach(function(a) {
+      a.addEventListener('click', closeNav);
+    });
+    document.querySelectorAll('form').forEach(function(form) {
+      form.addEventListener('submit', function() {
+        var btn = form.querySelector('button[type="submit"]');
+        if (btn && !btn.disabled) {
+          btn.disabled = true;
+          btn.textContent = btn.dataset.loadingText || 'Saving...';
+        }
+      });
+    });
+  });
+  </script>
+  {% endblock %}
+</body>
+</html>

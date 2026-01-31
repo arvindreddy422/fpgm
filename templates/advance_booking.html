@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Advance Booking – PG Management{% endblock %}
+{% block content %}
+<div class="container">
+  <header class="page-header">
+    <h1 class="page-title">Advance Booking</h1>
+    <p class="page-subtitle">People who have booked in advance. Add name, phone and expected join date.</p>
+  </header>
+  <button type="button" class="btn btn--primary" id="openBookingModal" style="margin-bottom:var(--spacing-lg);">Add Advance Booking</button>
+
+  <div id="bookingModal" class="modal-backdrop" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="bookingModalTitle">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <div class="card">
+        <h2 id="bookingModalTitle" class="section-title">New Advance Booking</h2>
+        <form method="post" action="/advance-booking/add" id="advanceBookingForm">
+          <div class="form-group">
+            <label for="modal_name">Name</label>
+            <input id="modal_name" name="name" type="text" required class="input">
+          </div>
+          <div class="form-group">
+            <label for="modal_phone">Phone</label>
+            <input id="modal_phone" name="phone" type="tel" required class="input">
+          </div>
+          <div class="form-group">
+            <label for="modal_expected_join_date">Expected Join Date</label>
+            <input id="modal_expected_join_date" name="expected_join_date" type="date" required class="input">
+          </div>
+          <div class="form-group">
+            <label for="modal_notes">Notes (optional)</label>
+            <input id="modal_notes" name="notes" type="text" class="input">
+          </div>
+          <div style="display:flex;gap:var(--spacing-sm);flex-wrap:wrap;">
+            <button type="submit" class="btn btn--primary" data-loading-text="Saving...">Save</button>
+            <button type="button" class="btn btn--secondary" id="closeBookingModal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {% if not bookings %}
+  <p class="page-loading">No advance bookings yet.</p>
+  {% else %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Phone (call)</th>
+          <th>Expected Join Date</th>
+          <th>Notes</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in bookings %}
+        <tr>
+          <td>{{ b.name }}</td>
+          <td><a href="tel:{{ b.phone }}">{{ b.phone }}</a></td>
+          <td>{{ b.expectedJoinDate }}</td>
+          <td>{{ b.notes }}</td>
+          <td>
+            <form action="/advance-booking/remove" method="post" style="display:inline;">
+              <input type="hidden" name="id" value="{{ b._id }}">
+              <button type="submit" class="btn btn--secondary btn--small" data-loading-text="Removing...">Remove</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+<script>
+(function() {
+  var modal = document.getElementById('bookingModal');
+  var openBtn = document.getElementById('openBookingModal');
+  var closeBtn = document.getElementById('closeBookingModal');
+  var dateInp = document.getElementById('modal_expected_join_date');
+  openBtn.addEventListener('click', function() {
+    modal.style.display = 'flex';
+    if (dateInp && !dateInp.value) dateInp.value = new Date().toISOString().slice(0, 10);
+  });
+  closeBtn.addEventListener('click', function() { modal.style.display = 'none'; });
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) modal.style.display = 'none';
+  });
+})();
+</script>
+{% endblock %}

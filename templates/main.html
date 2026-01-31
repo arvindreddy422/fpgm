@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Main – PG Management{% endblock %}
+{% block content %}
+<div class="container container--main">
+  <header class="page-header page-header--minimal">
+    <div class="page-header__row">
+      <h1 class="page-title page-title--minimal">Main</h1>
+      <a href="/rooms" class="nav-link-text">Manage rooms</a>
+    </div>
+  </header>
+  <div class="main-desktop">
+    {% for floor_num in floor_numbers %}
+    <section class="floor-section floor-section--minimal">
+      <h2 class="floor-section-header floor-section-header--minimal">{{ floor_label(floor_num) }}</h2>
+      <div class="floor-section-rooms floor-section-rooms--minimal">
+        {% for room in by_floor[floor_num] %}
+        <div class="room-row room-row--minimal">
+          <span class="room-row-label">Room {{ room.roomNumber }}</span>
+          <span class="room-row-stats">{{ room.fillCount }}/{{ room.maxPeople }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endfor %}
+  </div>
+  <div class="main-mobile">
+    {% for floor_num in floor_numbers %}
+    <div class="main-mobile-floor-row">
+      <span class="main-mobile-floor-label">{{ floor_label(floor_num) }}{% if floor_num == 0 %} -{% endif %}</span>
+      <span class="main-mobile-sep">|</span>
+      <div class="main-mobile-rooms">
+        {% for room in by_floor[floor_num] %}
+        <span class="main-mobile-room" data-room-index="{{ (loop.index0 % 4) }}">{{ room.roomNumber }} - {{ room.fillCount }}/{{ room.maxPeople }}</span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

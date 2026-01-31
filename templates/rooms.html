@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Rooms – PG Management{% endblock %}
+{% block content %}
+<div class="container">
+  <header class="page-header">
+    <h1 class="page-title">Rooms</h1>
+    <p class="page-subtitle">Add or remove people from rooms. View occupancy.</p>
+  </header>
+
+  {% for floor_num in floor_numbers %}
+  <section class="floor-section">
+    <h2 class="floor-section-header">{{ floor_label(floor_num) }}</h2>
+    <div class="floor-section-rooms">
+      {% for room in by_floor[floor_num] %}
+      <div class="card room-card">
+        <h2 class="room-card-title">Room {{ room.roomNumber }}</h2>
+        <div class="room-card-stats">
+          <span>Vacancy: {{ room.emptyCount }}</span>
+          <span class="room-card-vacancy">{{ room.fillCount }} / {{ room.maxPeople }} filled</span>
+        </div>
+        <div class="room-card-progress">
+          <div class="room-card-progress-fill {% if room.fillCount >= room.maxPeople %}full{% else %}partial{% endif %}" style="width: {{ (room.maxPeople and (room.fillCount / room.maxPeople * 100)) or 0 }}%"></div>
+        </div>
+        {% set room_occupants = occupants | selectattr('roomId', 'equalto', room._id) | list %}
+        {% if room_occupants %}
+        <ul class="room-card-occupants">
+          {% for o in room_occupants %}
+          <li>
+            <span>{{ o.name }} — {{ o.phone }}</span>
+            <form action="/occupants/remove" method="post" style="display:inline;">
+              <input type="hidden" name="occupant_id" value="{{ o._id }}">
+              <button type="submit" class="btn btn--secondary btn--small" data-loading-text="Removing...">Remove</button>
+            </form>
+          </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if room.fillCount < room.maxPeople %}
+        <button type="button" class="btn btn--primary btn-add-person" data-room-id="{{ room._id }}">Add Person</button>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+</div>
+
+<!-- Add Person modal -->
+<div id="addPersonModal" class="modal-backdrop" style="display:none;">
+  <div class="modal-content">
+    <div class="card">
+      <h2 class="section-title">Add Person to Room</h2>
+      <form method="post" action="/occupants/add" id="addPersonForm">
+        <input type="hidden" name="room_id" id="modal_room_id" value="">
+        <div class="form-group">
+          <label for="modal_name">Name</label>
+          <input id="modal_name" name="name" type="text" required class="input">
+        </div>
+        <div class="form-group">
+          <label for="modal_phone">Phone</label>
+          <input id="modal_phone" name="phone" type="tel" required class="input">
+        </div>
+        <div class="form-group">
+          <label for="modal_date">Date of Join</label>
+          <input id="modal_date" name="date_of_join" type="date" required class="input">
+        </div>
+        <div style="display:flex;gap:var(--spacing-sm);flex-wrap:wrap;">
+          <button type="submit" class="btn btn--primary" data-loading-text="Adding...">Add</button>
+          <button type="button" class="btn btn--secondary" id="closeModal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<script>
+(function() {
+  const modal = document.getElementById('addPersonModal');
+  const roomIdInput = document.getElementById('modal_room_id');
+  const dateInput = document.getElementById('modal_date');
+  if (!dateInput.value) dateInput.value = new Date().toISOString().slice(0, 10);
+  document.querySelectorAll('.btn-add-person').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      roomIdInput.value = this.dataset.roomId;
+      modal.style.display = 'flex';
+    });
+  });
+  document.getElementById('closeModal').addEventListener('click', function() { modal.style.display = 'none'; });
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) modal.style.display = 'none';
+  });
+})();
+</script>
+{% endblock %}

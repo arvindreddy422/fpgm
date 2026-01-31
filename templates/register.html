@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register – PG Management</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="container container--auth">
+    <h1 class="page-title">Register</h1>
+    <form method="post" action="/register" class="form">
+      <div class="form-group">
+        <label for="name">Name</label>
+        <input id="name" name="name" type="text" required autocomplete="name" class="input">
+      </div>
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" required autocomplete="email" class="input">
+      </div>
+      <div class="form-group">
+        <label for="password">Password (min 6 characters)</label>
+        <input id="password" name="password" type="password" required minlength="6" autocomplete="new-password" class="input">
+      </div>
+      {% if error %}
+      <p class="form-error">{{ error }}</p>
+      {% endif %}
+      <button type="submit" class="btn btn--primary" id="registerBtn">Register</button>
+    </form>
+    <p class="auth-footer">Already have an account? <a href="/login">Login</a></p>
+  </div>
+  <script>
+  document.querySelector('form').addEventListener('submit', function() {
+    var btn = document.getElementById('registerBtn');
+    if (btn && !btn.disabled) { btn.disabled = true; btn.textContent = 'Please wait...'; }
+  });
+  </script>
+</body>
+</html>

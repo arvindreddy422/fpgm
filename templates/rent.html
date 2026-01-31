@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Rent – PG Management{% endblock %}
+{% block content %}
+<div class="container">
+  <header class="page-header">
+    <h1 class="page-title">Rent</h1>
+    <p class="page-subtitle">See who has paid or unpaid rent for the selected month.</p>
+  </header>
+  <form method="get" action="/rent" class="form-inline" style="margin-bottom:var(--spacing-lg);">
+    <div class="form-group" style="max-width:280px;">
+      <label for="month">Select Month</label>
+      <select id="month" name="month" class="input" onchange="this.form.submit()">
+        {% for opt in month_options %}
+        <option value="{{ opt.value }}" {% if opt.value == month %}selected{% endif %}>{{ opt.label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </form>
+  <h2 class="section-title">{{ month_label }}</h2>
+  {% if not list %}
+  <p class="page-loading">No occupants for this month.</p>
+  {% else %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Room</th>
+          <th>Name</th>
+          <th>Phone (call)</th>
+          <th>Date of Join</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in list %}
+        <tr>
+          <td>{{ row.roomLabel }}</td>
+          <td>{{ row.name }}</td>
+          <td><a href="tel:{{ row.phone }}">{{ row.phone }}</a></td>
+          <td>{{ row.dateOfJoin }}</td>
+          <td><span class="badge {% if row.paid %}paid{% else %}unpaid{% endif %}">{% if row.paid %}Paid{% else %}Unpaid{% endif %}</span></td>
+          <td>
+            <a href="/rent/toggle?occupant_id={{ row.occupantId }}&month={{ month }}" class="btn btn--small rent-toggle-link {% if row.paid %}btn--secondary{% else %}btn--primary{% endif %}">Mark {% if row.paid %}Unpaid{% else %}Paid{% endif %}</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+<script>
+document.querySelectorAll('.rent-toggle-link').forEach(function(a) {
+  a.addEventListener('click', function(e) {
+    if (this.dataset.clicked) { e.preventDefault(); return false; }
+    this.dataset.clicked = '1';
+    this.style.pointerEvents = 'none';
+    this.textContent = 'Updating...';
+  });
+});
+</script>
+{% endblock %}
